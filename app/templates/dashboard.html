@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — CastleBay Portal Preview{% endblock %}
+{% block brand_context %}Portal · Dashboard{% endblock %}
+
+{% block extra_css %}
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 18px 20px;
+}
+.kpi .label { margin-bottom: 8px; }
+.kpi .val {
+  font-size: 28px;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.kpi .sub {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.section-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin: 12px 0 14px;
+}
+.section-head h2 {
+  font-size: 11px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--text-3);
+}
+.section-head a { color: var(--accent); font-size: 11px; }
+
+/* Boards table */
+.board-list {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+.board-row {
+  display: grid;
+  grid-template-columns: 1fr 60px 200px 80px 120px;
+  gap: 18px;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+}
+.board-row:last-child { border-bottom: 0; }
+.board-row:hover { background: var(--surface-2); }
+.board-row.head {
+  background: var(--surface-2);
+  cursor: default;
+  padding: 10px 18px;
+}
+[data-theme="dark"] .board-row.head { background: var(--bg); }
+.board-row.head:hover { background: var(--surface-2); }
+.b-name { font-size: 13px; font-weight: 500; }
+.b-id { font-size: 10px; color: var(--text-3); font-family: 'JetBrains Mono', monospace; }
+.b-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 500;
+  text-align: right;
+}
+.b-pipe-bar {
+  display: flex; height: 6px; border-radius: 100px;
+  overflow: hidden; background: var(--surface-2);
+}
+[data-theme="dark"] .b-pipe-bar { background: var(--bg); }
+.b-pipe-bar > span { display: block; height: 100%; }
+.b-sync {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-3);
+  text-align: right;
+}
+.b-sync.fresh { color: var(--success); }
+.b-sync.stale { color: var(--warn); }
+.b-sync.error { color: var(--danger); }
+
+.attention {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 22px 24px;
+  margin-bottom: 28px;
+}
+.attention .placeholder {
+  font-size: 12px;
+  color: var(--text-3);
+  padding: 14px 0;
+  text-align: center;
+  font-style: italic;
+}
+.attention .placeholder strong { color: var(--text-2); font-weight: 500; }
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 16px;
+}
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 22px 24px;
+}
+.placement-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.placement-row:last-child { border-bottom: 0; }
+.placement-row .who strong { font-weight: 500; }
+.placement-row .who span { font-size: 11px; color: var(--text-3); display: block; }
+.placement-row .when {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+  align-self: center;
+}
+
+.sync-footer {
+  margin-top: 28px;
+  padding: 14px 18px;
+  background: var(--surface-2);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sync-footer strong { color: var(--text); font-weight: 500; }
+
+@media (max-width: 900px) {
+  .kpis { grid-template-columns: 1fr 1fr; }
+  .board-row, .board-row.head { grid-template-columns: 1fr 50px 60px; gap: 10px; }
+  .board-row > div:nth-child(3), .board-row > div:nth-child(5),
+  .board-row.head > div:nth-child(3), .board-row.head > div:nth-child(5) { display: none; }
+  .two-col { grid-template-columns: 1fr; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-head">
+    <h1>Dashboard</h1>
+    <p>Operating overview of every active engagement.</p>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi">
+      <div class="label">Open roles</div>
+      <div class="val">{{ kpis.open_roles if kpis.open_roles is not none else '—' }}</div>
+      <div class="sub">across {{ kpis.active_boards }} boards</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Candidates in flight</div>
+      <div class="val">{{ kpis.in_flight if kpis.in_flight is not none else '—' }}</div>
+      <div class="sub">active pipeline</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Interviews this week</div>
+      <div class="val">{{ kpis.interviews_week if kpis.interviews_week is not none else '—' }}</div>
+      <div class="sub">scheduled · pending</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Placements MTD</div>
+      <div class="val">{{ kpis.placements_mtd if kpis.placements_mtd is not none else '—' }}</div>
+      <div class="sub">May 2026</div>
+    </div>
+  </div>
+
+  <!-- Boards -->
+  <div class="section-head">
+    <h2>Boards at a glance</h2>
+    <a href="/pipeline">Open pipeline →</a>
+  </div>
+  <div class="board-list">
+    <div class="board-row head">
+      <div class="label">Board</div>
+      <div class="label" style="text-align:right">Roles</div>
+      <div class="label">Pipeline</div>
+      <div class="label" style="text-align:right">Cands</div>
+      <div class="label" style="text-align:right">Sync</div>
+    </div>
+    {% for b in boards %}
+    <a href="/pipeline?board_id={{ b.id }}" class="board-row">
+      <div>
+        <div class="b-name">{{ b.name }}</div>
+        <div class="b-id">{{ b.id }}</div>
+      </div>
+      <div class="b-num">{{ b.role_count if b.role_count is not none else '—' }}</div>
+      <div>
+        <div class="b-pipe-bar">
+          {% for stage, pct in b.pipeline_pct.items() %}
+          <span style="width:{{ pct }}%; background:{{ b.pipeline_colors[stage] }}"></span>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="b-num">{{ b.total_candidates if b.total_candidates is not none else '—' }}</div>
+      <div class="b-sync {{ b.sync_class }}">{{ b.sync_label }}</div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Two-col: needs attention + recent placements -->
+  <div class="two-col">
+    <div class="panel">
+      <div class="section-head" style="margin-top:0">
+        <h2>Needs attention</h2>
+      </div>
+      <div class="placeholder" style="font-size: 12px; color: var(--text-3); font-style: italic; padding: 14px 0; text-align: center;">
+        <strong style="color:var(--text-2); font-weight:500;">Coming soon —</strong>
+        roles with no submissions in 5+ days, candidates stuck in stage &gt; 7 days,
+        sync errors. <span class="badge tobuild">backlog</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-head" style="margin-top:0">
+        <h2>Recent placements</h2>
+      </div>
+      <div class="placeholder" style="font-size: 12px; color: var(--text-3); font-style: italic; padding: 14px 0; text-align: center;">
+        <strong style="color:var(--text-2); font-weight:500;">Coming soon —</strong>
+        last 5 placements with start date and client. <span class="badge tobuild">backlog</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sync health footer -->
+  <div class="sync-footer">
+    <span>
+      <strong>Sync health</strong> —
+      {% if monday_error %}
+        <span style="color:var(--warn)">Monday unreachable: {{ monday_error }}</span>
+      {% else %}
+        Last refresh {{ fetched_at }} · 5-min cache · all boards live
+      {% endif %}
+    </span>
+    <a href="/sync" style="color:var(--accent)">Sync detail →</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Drill-Down — CastleBay Portal Preview{% endblock %}
-{% block brand_context %}Portal · Drill-Down{% endblock %}
+{% block title %}Pipeline — CastleBay Portal Preview{% endblock %}
+{% block brand_context %}Portal · Pipeline{% endblock %}
 
 {% block extra_css %}
 .layout { display: grid; grid-template-columns: 280px 340px 1fr; height: calc(100vh - 124px); }
@@ -47,7 +47,82 @@
 .cand .rate { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text); text-align: right; }
 .cand .arrow { color: var(--text-3); font-size: 14px; }
 
-.role-actions { display: flex; gap: 8px; margin-bottom: 18px; }
+.role-actions { display: flex; gap: 8px; margin-bottom: 18px; align-items: center; }
+
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 11px;
+  margin-right: auto;
+}
+.view-toggle a {
+  padding: 6px 12px;
+  color: var(--text-2);
+  border-right: 1px solid var(--border);
+  text-decoration: none;
+}
+.view-toggle a:last-child { border-right: 0; }
+.view-toggle a.on {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 500;
+}
+[data-theme="dark"] .view-toggle a.on { background: var(--surface-2); }
+
+.kanban-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(220px, 1fr));
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+.kanban-col {
+  background: var(--surface-2);
+  border-radius: 6px;
+  padding: 10px;
+}
+[data-theme="dark"] .kanban-col { background: var(--surface); }
+.kanban-col-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 6px 10px;
+  font-size: 11px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-2);
+}
+.kanban-col-head .count {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-3);
+}
+.kanban-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+}
+.kanban-card .ref {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 500; color: var(--text);
+  margin-bottom: 2px;
+}
+.kanban-card .role-line {
+  font-size: 11px; color: var(--text-2); margin-bottom: 8px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.kanban-card .row {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--text-3);
+}
+.kanban-card .row .rate {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text); font-weight: 500;
+}
+.kanban-empty {
+  font-size: 11px; color: var(--text-3); padding: 8px 6px;
+  font-style: italic;
+}
 
 .empty-pane {
   padding: 40px 24px;
@@ -67,7 +142,7 @@
 <div class="crumbs">
   <a href="/boards">Boards</a>
   <span class="sep">›</span>
-  <a href="/drilldown?board_id={{ active_board.id }}">{{ active_board.name }}</a>
+  <a href="/pipeline?board_id={{ active_board.id }}">{{ active_board.name }}</a>
   {% if active_role %}
   <span class="sep">›</span>
   <strong>{{ active_role.title }}</strong>
@@ -82,7 +157,7 @@
     <div class="col-head"><h2>Boards</h2><span class="count">{{ boards|length }}</span></div>
     <div class="col-body">
       {% for b in boards %}
-      <a href="/drilldown?board_id={{ b.id }}" class="list-row {% if active_board and b.id == active_board.id %}on{% endif %}">
+      <a href="/pipeline?board_id={{ b.id }}" class="list-row {% if active_board and b.id == active_board.id %}on{% endif %}">
         <div class="name">{{ b.name }}</div>
         <div class="sub">{{ b.role_count if b.role_count is not none else '—' }} roles · {{ b.total_candidates if b.total_candidates is not none else '—' }} candidates</div>
         <div class="pipe">
@@ -101,7 +176,7 @@
     <div class="col-body">
       {% if roles %}
         {% for r in roles %}
-        <a href="/drilldown?board_id={{ active_board.id }}&role_id={{ r.id }}" class="role-row {% if active_role and r.id == active_role.id %}on{% endif %}">
+        <a href="/pipeline?board_id={{ active_board.id }}&role_id={{ r.id }}" class="role-row {% if active_role and r.id == active_role.id %}on{% endif %}">
           <div class="title">{{ r.title }}</div>
           <div class="meta">{{ r.id }}</div>
         </a>
@@ -120,11 +195,37 @@
       <div class="meta">{{ active_board.short_name }} · monday item {{ active_role.id }}</div>
     </div>
     <div class="role-actions">
-      <a href="/kanban?board_id={{ active_board.id }}&role_id={{ active_role.id }}" class="btn">Kanban view →</a>
+      <div class="view-toggle">
+        <a href="/pipeline?board_id={{ active_board.id }}&role_id={{ active_role.id }}&view=list"
+           class="{% if view != 'kanban' %}on{% endif %}">List</a>
+        <a href="/pipeline?board_id={{ active_board.id }}&role_id={{ active_role.id }}&view=kanban"
+           class="{% if view == 'kanban' %}on{% endif %}">Kanban</a>
+      </div>
       <button class="btn preview-disabled-tooltip preview-disabled">Edit role</button>
       <button class="btn primary preview-disabled-tooltip preview-disabled">+ Submit candidate</button>
     </div>
 
+    {% if view == 'kanban' %}
+    <div class="kanban-strip">
+      {% for stage in stages %}
+      <div class="kanban-col">
+        <div class="kanban-col-head">
+          <span><span class="dot {{ stage.dot_class }}"></span> {{ stage.name }}</span>
+          <span class="count">{{ stage.candidates|length }}</span>
+        </div>
+        {% for c in stage.candidates %}
+        <div class="kanban-card">
+          <div class="ref">{{ c.id }}</div>
+          <div class="role-line">{{ c.title or '—' }}</div>
+          <div class="row"><span>{{ c.vendor or '—' }}</span><span class="rate">{{ c.rate or '' }}</span></div>
+        </div>
+        {% else %}
+        <div class="kanban-empty">empty</div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
     {% for stage in stages %}
     <div class="stage-table">
       <div class="stage-bar">
@@ -144,6 +245,7 @@
       {% endfor %}
     </div>
     {% endfor %}
+    {% endif %}
 
     {% else %}
       <div class="empty-pane" style="padding-top: 80px;">

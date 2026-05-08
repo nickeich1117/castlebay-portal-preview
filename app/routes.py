@@ -14,6 +14,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.auth import get_current_user, login as auth_login, logout as auth_logout
 from app.config import ACTIVE_BOARDS
+from app.db import cursor as db_cursor
 from app.monday_read import (
     MondayAPIError,
     MutationBlockedError,
@@ -64,7 +65,7 @@ def login_post(request: Request, email: str = Form(...), password: str = Form(..
             status_code=401,
         )
     token, _user = result
-    response = RedirectResponse("/boards", status_code=303)
+    response = RedirectResponse("/", status_code=303)
     secure = request.url.scheme == "https"
     response.set_cookie(
         "session", token, httponly=True, secure=secure, samesite="lax", max_age=60 * 60 * 24,
@@ -83,17 +84,7 @@ def logout(request: Request):
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Root → boards
-# ──────────────────────────────────────────────────────────────────────────────
-
-
-@router.get("/")
-def root(request: Request):
-    return RedirectResponse("/boards", status_code=303)
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Live data: boards index
+# Constants
 # ──────────────────────────────────────────────────────────────────────────────
 
 
@@ -127,37 +118,84 @@ def _enrich_board(board: dict) -> dict:
     return out
 
 
-@router.get("/boards", response_class=HTMLResponse)
-def boards_index(request: Request):
-    user = _require_user(request)
-    boards = []
+def _all_boards_enriched() -> tuple[list[dict], Optional[str]]:
+    """Return all boards with live counts. Second item is monday_error string or None."""
     monday_error = None
     if not get_client().configured():
-        monday_error = "MONDAY_API_KEY not set"
+        return (
+            [{**b, "role_count": None, "total_candidates": None,
+              "pipeline_pct": {}, "pipeline_colors": PIPELINE_COLORS}
+             for b in ACTIVE_BOARDS],
+            "MONDAY_API_KEY not set",
+        )
+    try:
+        boards = [_enrich_board(b) for b in ACTIVE_BOARDS]
+    except Exception as e:
+        monday_error = str(e)
+        boards = [{**b, "role_count": None, "total_candidates": None,
+                  "pipeline_pct": {}, "pipeline_colors": PIPELINE_COLORS}
+                 for b in ACTIVE_BOARDS]
+    return boards, monday_error
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Dashboard (root)
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+def _sync_decorate(b: dict) -> dict:
+    """Add sync_class / sync_label / status_label / last_fetched fields based on data presence."""
+    out = dict(b)
+    if b.get("total_candidates") is None:
+        out["sync_class"] = "error"
+        out["sync_label"] = "error"
+        out["status_label"] = "Error"
+        out["last_fetched"] = "—"
     else:
-        try:
-            for b in ACTIVE_BOARDS:
-                boards.append(_enrich_board(b))
-        except Exception as e:
-            monday_error = str(e)
-            boards = [{**b, "role_count": None, "total_candidates": None,
-                      "pipeline_pct": {}, "pipeline_colors": PIPELINE_COLORS}
-                     for b in ACTIVE_BOARDS]
+        out["sync_class"] = "fresh"
+        out["sync_label"] = "live"
+        out["status_label"] = "Healthy"
+        out["last_fetched"] = "≤ 5 min ago"
+    return out
+
+
+@router.get("/", response_class=HTMLResponse)
+def dashboard(request: Request):
+    user = _require_user(request)
+    boards_raw, monday_error = _all_boards_enriched()
+    boards = [_sync_decorate(b) for b in boards_raw]
+
+    # Aggregate KPIs from what we have
+    open_roles = sum((b.get("role_count") or 0) for b in boards) or None
+    in_flight = sum((b.get("total_candidates") or 0) for b in boards) or None
+    active_boards = len([b for b in boards if b.get("total_candidates") is not None])
+
+    kpis = {
+        "open_roles": open_roles,
+        "in_flight": in_flight,
+        "interviews_week": None,   # backlog — needs cb_interview_date scan
+        "placements_mtd": None,    # backlog — needs historical snapshots
+        "active_boards": active_boards,
+    }
 
     return templates.TemplateResponse(
         request,
-        "boards.html",
+        "dashboard.html",
         {
             "user": user,
-            "active_nav": "boards",
-            "boards": boards or [{**b, "role_count": None, "total_candidates": None,
-                                  "pipeline_pct": {}, "pipeline_colors": PIPELINE_COLORS}
-                                 for b in ACTIVE_BOARDS],
+            "active_nav": "dashboard",
+            "kpis": kpis,
+            "boards": boards,
             "monday_error": monday_error,
             "fetched_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
-            "cache_status": "5-min cache",
         },
     )
+
+
+@router.get("/boards")
+def boards_legacy_redirect():
+    """Backward compat — old /boards URL now lands on dashboard."""
+    return RedirectResponse("/", status_code=303)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -170,8 +208,20 @@ def _short(name: str) -> str:
     return name.replace("2026 — ", "").replace("2026 - ", "")
 
 
-@router.get("/drilldown", response_class=HTMLResponse)
-def drilldown(request: Request, board_id: Optional[str] = None, role_id: Optional[str] = None):
+@router.get("/drilldown")
+def drilldown_legacy_redirect(board_id: Optional[str] = None, role_id: Optional[str] = None):
+    """Backward compat — /drilldown was renamed to /pipeline."""
+    qs = ""
+    if board_id:
+        qs = f"?board_id={board_id}"
+        if role_id:
+            qs += f"&role_id={role_id}"
+    return RedirectResponse(f"/pipeline{qs}", status_code=303)
+
+
+@router.get("/pipeline", response_class=HTMLResponse)
+def pipeline(request: Request, board_id: Optional[str] = None,
+             role_id: Optional[str] = None, view: str = "list"):
     user = _require_user(request)
 
     boards = [{**_enrich_board(b), "short_name": _short(b["name"])} for b in ACTIVE_BOARDS]
@@ -240,16 +290,17 @@ def drilldown(request: Request, board_id: Optional[str] = None, role_id: Optiona
 
     return templates.TemplateResponse(
         request,
-        "drilldown.html",
+        "pipeline.html",
         {
             "user": user,
-            "active_nav": "drilldown",
+            "active_nav": "pipeline",
             "boards": boards,
             "active_board": active_board,
             "roles": roles,
             "active_role": active_role,
             "stages": stages,
             "monday_error": monday_error,
+            "view": "kanban" if view == "kanban" else "list",
         },
     )
 
@@ -259,13 +310,10 @@ def drilldown(request: Request, board_id: Optional[str] = None, role_id: Optiona
 # ──────────────────────────────────────────────────────────────────────────────
 
 
-@router.get("/kanban", response_class=HTMLResponse)
-def kanban(request: Request):
-    user = _require_user(request)
-    return templates.TemplateResponse(
-        request, "B_kanban.html",
-        {"user": user, "active_nav": "kanban"},
-    )
+@router.get("/kanban")
+def kanban_legacy_redirect():
+    """Backward compat — kanban is now a view of /pipeline."""
+    return RedirectResponse("/pipeline?view=kanban", status_code=303)
 
 
 @router.get("/vendor", response_class=HTMLResponse)
@@ -302,6 +350,69 @@ def feedback_detail(request: Request, candidate_id: str):
         request, "F_vendor_feedback.html",
         {"user": user, "active_nav": "feedback",
          "candidate_id": candidate_id},
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Audit
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+@router.get("/audit", response_class=HTMLResponse)
+def audit(request: Request, tab: str = "actions"):
+    user = _require_user(request)
+
+    rows: list[dict] = []
+    sessions: list[dict] = []
+    logins: list[dict] = []
+
+    if tab == "sessions":
+        # Pull active sessions from local DB
+        with db_cursor() as c:
+            db_rows = c.execute(
+                """
+                SELECT u.email, u.display_name, s.created_at, s.expires_at
+                FROM sessions s JOIN users u ON s.user_id = u.id
+                ORDER BY s.created_at DESC
+                """
+            ).fetchall()
+        sessions = [dict(r) for r in db_rows]
+
+    return templates.TemplateResponse(
+        request,
+        "audit.html",
+        {
+            "user": user,
+            "active_nav": "audit",
+            "tab": tab if tab in ("actions", "logins", "sessions") else "actions",
+            "rows": rows,
+            "sessions": sessions,
+            "logins": logins,
+        },
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Sync status
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+@router.get("/sync", response_class=HTMLResponse)
+def sync_status(request: Request):
+    user = _require_user(request)
+    boards_raw, monday_error = _all_boards_enriched()
+    boards = [_sync_decorate(b) for b in boards_raw]
+    return templates.TemplateResponse(
+        request,
+        "sync.html",
+        {
+            "user": user,
+            "active_nav": "sync",
+            "boards": boards,
+            "monday_error": monday_error,
+            "fetched_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+            "token_type": "prod token (read+write scope)" if get_client().configured() else "not configured",
+        },
     )
 
 

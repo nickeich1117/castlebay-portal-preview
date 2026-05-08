@@ -28,6 +28,14 @@
     position: relative;
     pointer-events: auto;
   }
+  .nav-divider {
+    width: 1px;
+    height: 18px;
+    background: var(--border);
+    margin: 0 6px;
+    align-self: center;
+    display: inline-block;
+  }
   .preview-disabled-tooltip:hover::after {
     content: "Preview · writes disabled";
     position: absolute;
@@ -61,9 +69,11 @@
     </a>
   </div>
   <nav class="bar-nav">
-    <a href="/boards" class="{% if active_nav == 'boards' %}active{% endif %}">Boards</a>
-    <a href="/drilldown" class="{% if active_nav == 'drilldown' %}active{% endif %}">Drill-Down</a>
-    <a href="/kanban" class="{% if active_nav == 'kanban' %}active{% endif %}">Kanban</a>
+    <a href="/" class="{% if active_nav == 'dashboard' %}active{% endif %}">Dashboard</a>
+    <a href="/pipeline" class="{% if active_nav == 'pipeline' %}active{% endif %}">Pipeline</a>
+    <a href="/audit" class="{% if active_nav == 'audit' %}active{% endif %}">Audit</a>
+    <a href="/sync" class="{% if active_nav == 'sync' %}active{% endif %}">Sync</a>
+    <span class="nav-divider"></span>
     <a href="/vendor" class="{% if active_nav == 'vendor' %}active{% endif %}">Vendor View</a>
     <a href="/feedback" class="{% if active_nav == 'feedback' %}active{% endif %}" style="position:relative;">
       Feedback

@@ -74,8 +74,10 @@ def test_root_redirects_to_login_when_unauthenticated(client):
 
 
 @pytest.mark.parametrize("path", [
-    "/boards", "/drilldown", "/kanban", "/vendor",
-    "/interviewer", "/feedback", "/feedback/04766",
+    "/", "/pipeline", "/pipeline?view=kanban", "/audit", "/audit?tab=sessions",
+    "/sync", "/vendor", "/interviewer", "/feedback", "/feedback/04766",
+    # Legacy redirects:
+    "/boards", "/drilldown", "/kanban",
 ])
 def test_authed_routes_render(auth_client, path):
     r = auth_client.get(path, follow_redirects=False)
