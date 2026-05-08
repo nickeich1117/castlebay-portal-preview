@@ -22,8 +22,8 @@ from app.db import get_user_by_email, init_db
 
 USERS = [
     {"email": "nick@securuscsi.com", "name": "Nick Eichelberger", "env": "PREVIEW_NICK_PW"},
-    {"email": "david@castlebayconsulting.com", "name": "David Leduc", "env": "PREVIEW_DAVID_PW"},
-    {"email": "don@castlebayconsulting.com", "name": "Don Reggi", "env": "PREVIEW_DON_PW"},
+    {"email": "david@castlebayconsulting.com", "name": "David Durbin", "env": "PREVIEW_DAVID_PW"},
+    {"email": "don@castlebayconsulting.com", "name": "Don MacFarland", "env": "PREVIEW_DON_PW"},
 ]
 
 
