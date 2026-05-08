@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: castlebay-portal-preview
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      # Existing prod token — read-only enforced in code (READ_ONLY_GUARANTEES.md)
+      # TODO before external review: cut a read-scoped token in Monday admin (BL-NEW)
+      - key: MONDAY_API_KEY
+        sync: false
+      - key: PREVIEW_SESSION_SECRET
+        generateValue: true
+      - key: PREVIEW_DB_PATH
+        value: /data/preview.db
+      - key: PREVIEW_SECURE_COOKIES
+        value: "true"
+      - key: PREVIEW_SESSION_TTL_HOURS
+        value: "24"
+      - key: PREVIEW_CACHE_TTL_SECONDS
+        value: "300"
+    disk:
+      name: preview-data
+      mountPath: /data
+      sizeGB: 1

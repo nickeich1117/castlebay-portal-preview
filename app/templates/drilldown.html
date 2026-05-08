@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Drill-Down — CastleBay Portal Preview{% endblock %}
+{% block brand_context %}Portal · Drill-Down{% endblock %}
+
+{% block extra_css %}
+.layout { display: grid; grid-template-columns: 280px 340px 1fr; height: calc(100vh - 124px); }
+.col { border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+.col:last-child { border-right: 0; background: var(--surface-2); }
+[data-theme="dark"] .col:last-child { background: var(--bg); }
+.col-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.col-head h2 { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); }
+.col-head .count { font-size: 11px; color: var(--text-3); font-family: 'JetBrains Mono', monospace; }
+.col-body { flex: 1; overflow-y: auto; }
+
+.list-row { padding: 14px 18px; border-bottom: 1px solid var(--border); cursor: pointer; border-left: 2px solid transparent; transition: background .12s; text-decoration: none; color: inherit; display: block; }
+.list-row:hover { background: var(--surface-2); }
+.list-row.on { background: var(--surface-2); border-left-color: var(--navy); }
+.list-row .name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.list-row .sub { font-size: 11px; color: var(--text-3); margin-bottom: 8px; }
+.list-row .pipe { display: flex; height: 4px; border-radius: 100px; overflow: hidden; background: var(--border); }
+.list-row .pipe span { display: block; height: 100%; }
+
+.role-row { padding: 14px 18px; border-bottom: 1px solid var(--border); cursor: pointer; border-left: 2px solid transparent; text-decoration: none; color: inherit; display: block; }
+.role-row:hover { background: var(--surface-2); }
+.role-row.on { background: var(--surface-2); border-left-color: var(--navy); }
+.role-row .title { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+.role-row .meta { font-size: 11px; color: var(--text-3); font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; }
+
+.detail { padding: 24px 28px 60px; overflow-y: auto; }
+.detail-head { margin-bottom: 18px; }
+.detail-head h1 { font-size: 18px; font-weight: 500; letter-spacing: -0.02em; margin-bottom: 4px; }
+.detail-head .meta { font-size: 12px; color: var(--text-2); font-family: 'JetBrains Mono', monospace; }
+
+.stage-table { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-bottom: 14px; }
+.stage-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+[data-theme="dark"] .stage-bar { background: var(--surface); }
+.stage-bar .name { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 500; }
+.stage-bar .count { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-3); }
+
+.cand { display: grid; grid-template-columns: 1fr 200px 100px 70px 16px; gap: 16px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.cand:last-child { border-bottom: 0; }
+.cand:hover { background: var(--surface-2); }
+.cand .ref { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text); }
+.cand .ref small { color: var(--text-3); margin-left: 8px; font-size: 11px; }
+.cand .vendor { font-size: 12px; color: var(--text-2); }
+.cand .when { font-size: 11px; color: var(--text-3); }
+.cand .rate { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text); text-align: right; }
+.cand .arrow { color: var(--text-3); font-size: 14px; }
+
+.role-actions { display: flex; gap: 8px; margin-bottom: 18px; }
+
+.empty-pane {
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; height: auto; }
+  .col { border-right: 0; border-bottom: 1px solid var(--border); max-height: 320px; }
+  .col:last-child { max-height: none; }
+}
+{% endblock %}
+
+{% block crumbs %}
+<div class="crumbs">
+  <a href="/boards">Boards</a>
+  <span class="sep">›</span>
+  <a href="/drilldown?board_id={{ active_board.id }}">{{ active_board.name }}</a>
+  {% if active_role %}
+  <span class="sep">›</span>
+  <strong>{{ active_role.title }}</strong>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="layout">
+  <!-- BOARDS -->
+  <aside class="col">
+    <div class="col-head"><h2>Boards</h2><span class="count">{{ boards|length }}</span></div>
+    <div class="col-body">
+      {% for b in boards %}
+      <a href="/drilldown?board_id={{ b.id }}" class="list-row {% if active_board and b.id == active_board.id %}on{% endif %}">
+        <div class="name">{{ b.name }}</div>
+        <div class="sub">{{ b.role_count if b.role_count is not none else '—' }} roles · {{ b.total_candidates if b.total_candidates is not none else '—' }} candidates</div>
+        <div class="pipe">
+          {% for stage, pct in b.pipeline_pct.items() %}
+          <span style="width:{{ pct }}%; background:{{ b.pipeline_colors[stage] }}"></span>
+          {% endfor %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </aside>
+
+  <!-- ROLES -->
+  <aside class="col">
+    <div class="col-head"><h2>Roles · {{ active_board.short_name }}</h2><span class="count">{{ roles|length }}</span></div>
+    <div class="col-body">
+      {% if roles %}
+        {% for r in roles %}
+        <a href="/drilldown?board_id={{ active_board.id }}&role_id={{ r.id }}" class="role-row {% if active_role and r.id == active_role.id %}on{% endif %}">
+          <div class="title">{{ r.title }}</div>
+          <div class="meta">{{ r.id }}</div>
+        </a>
+        {% endfor %}
+      {% else %}
+        <div class="empty-pane">No roles loaded.<br><br>{{ monday_error or "Pick a board to see roles." }}</div>
+      {% endif %}
+    </div>
+  </aside>
+
+  <!-- DETAIL -->
+  <main class="col detail">
+    {% if active_role %}
+    <div class="detail-head">
+      <h1>{{ active_role.title }}</h1>
+      <div class="meta">{{ active_board.short_name }} · monday item {{ active_role.id }}</div>
+    </div>
+    <div class="role-actions">
+      <a href="/kanban?board_id={{ active_board.id }}&role_id={{ active_role.id }}" class="btn">Kanban view →</a>
+      <button class="btn preview-disabled-tooltip preview-disabled">Edit role</button>
+      <button class="btn primary preview-disabled-tooltip preview-disabled">+ Submit candidate</button>
+    </div>
+
+    {% for stage in stages %}
+    <div class="stage-table">
+      <div class="stage-bar">
+        <div class="name"><span class="dot {{ stage.dot_class }}"></span>{{ stage.name }}</div>
+        <div class="count">{{ stage.candidates|length }} candidate{{ '' if stage.candidates|length == 1 else 's' }}</div>
+      </div>
+      {% for c in stage.candidates %}
+      <div class="cand">
+        <div class="ref">{{ c.id }} <small>{{ c.title or '' }}</small></div>
+        <div class="vendor">{{ c.vendor or '—' }}</div>
+        <div class="rate">{{ c.rate or '' }}</div>
+        <div class="when">{{ c.when or '' }}</div>
+        <div class="arrow">›</div>
+      </div>
+      {% else %}
+      <div class="cand"><div class="ref" style="color:var(--text-3); grid-column: 1/-1;">No candidates in this stage.</div></div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+
+    {% else %}
+      <div class="empty-pane" style="padding-top: 80px;">
+        Select a role to see its pipeline.
+      </div>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}

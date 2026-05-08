@@ -1,0 +1,623 @@
+{% extends "base.html" %}
+{% block title %}CastleBay Portal — Vendor View{% endblock %}
+{% set active_nav = "vendor" %}
+
+{% block extra_css %}
+.page { max-width: 1240px; }
+.who-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 22px;
+}
+.who-card .ava {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--navy); color: white;
+  display: grid; place-items: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+[data-theme="dark"] .who-card .ava { background: var(--accent); color: var(--bg); }
+.who-card strong { font-weight: 500; }
+.who-card span { color: var(--text-3); }
+
+/* Open roles section */
+.section-bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.section-bar h2 {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.section-bar .meta {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.role-list {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 32px;
+  background: var(--surface);
+}
+.role-bar {
+  display: grid;
+  grid-template-columns: 1fr 110px 130px 130px 80px;
+  gap: 16px;
+  padding: 10px 18px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+[data-theme="dark"] .role-bar { background: var(--bg); }
+.role-bar .label { font-size: 10px; }
+
+.r-row {
+  display: grid;
+  grid-template-columns: 1fr 110px 130px 130px 80px;
+  gap: 16px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  cursor: pointer;
+  transition: background .12s;
+}
+.r-row:last-child { border-bottom: 0; }
+.r-row:hover { background: var(--surface-2); }
+.r-name { font-size: 13px; font-weight: 500; }
+.r-client { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.r-rate {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text);
+}
+.r-mine {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.r-mine strong {
+  font-weight: 500;
+  color: var(--text);
+}
+.r-others {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.r-action {
+  text-align: right;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+/* My submissions table */
+.subs {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.subs thead th { background: var(--surface-2); }
+[data-theme="dark"] .subs thead th { background: var(--bg); }
+
+.stage-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-weight: 500;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+[data-theme="dark"] .stage-pill { background: var(--bg); }
+
+.competitor-line {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.competitor-line span {
+  display: inline-block;
+  margin-right: 12px;
+}
+
+.privacy-note {
+  margin-top: 18px;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-2);
+  border-left: 3px solid var(--accent);
+}
+.privacy-note strong { color: var(--text); font-weight: 500; }
+
+/* Upcoming interviews */
+.upcoming {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  margin-bottom: 32px;
+  overflow: hidden;
+}
+.upcoming-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+[data-theme="dark"] .upcoming-bar { background: var(--bg); }
+.upcoming-bar .left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.upcoming-bar h2 {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.upcoming-bar .count {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+}
+.upcoming-bar .right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.upcoming-bar select {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--text);
+}
+[data-theme="dark"] .upcoming-bar select { background: var(--surface); }
+
+.iv-row {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr 1.4fr auto;
+  gap: 18px;
+  align-items: center;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.iv-row:last-child { border-bottom: 0; }
+.iv-cand strong { font-weight: 500; }
+.iv-cand .mono { color: var(--text); }
+.iv-cand .role { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+.iv-time .when {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.iv-time .when-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 2px;
+}
+.iv-with .with {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.iv-with .with strong { font-weight: 500; color: var(--text); }
+.iv-with .ctx { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+.iv-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.btn.tiny { padding: 5px 9px; font-size: 11px; }
+
+.tz-translate {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+  font-style: italic;
+}
+
+.resume-pill {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', monospace;
+  display: inline-block;
+}
+.resume-pill.ok {
+  background: rgba(45,138,95,.1);
+  color: var(--success);
+}
+.resume-pill.missing {
+  background: rgba(201,122,20,.12);
+  color: var(--warn);
+  font-family: inherit;
+}
+
+.feedback-alert {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: rgba(62,150,201,.06);
+  border: 1px solid rgba(62,150,201,.3);
+  border-radius: 6px;
+  margin-bottom: 24px;
+  text-decoration: none;
+  color: inherit;
+  transition: all .12s;
+  cursor: pointer;
+}
+.feedback-alert:hover {
+  background: rgba(62,150,201,.1);
+  border-color: rgba(62,150,201,.5);
+}
+[data-theme="dark"] .feedback-alert {
+  background: rgba(62,150,201,.08);
+  border-color: rgba(62,150,201,.25);
+}
+[data-theme="dark"] .feedback-alert:hover {
+  background: rgba(62,150,201,.13);
+}
+.feedback-alert .alert-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(62,150,201,.18);
+  flex-shrink: 0;
+}
+.feedback-alert .alert-text {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.feedback-alert .alert-text strong {
+  color: var(--text);
+  font-weight: 500;
+}
+.feedback-alert .alert-meta {
+  display: block;
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 2px;
+}
+.feedback-alert .alert-cta {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* MOBILE */
+@media (max-width: 900px) {
+  .role-bar, .r-row {
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+  }
+  .role-bar .label:nth-child(2),
+  .role-bar .label:nth-child(3),
+  .role-bar .label:nth-child(4) { display: none; }
+  .r-row .r-rate, .r-row .r-others { display: none; }
+  .r-row .r-mine { font-size: 11px; text-align: right; }
+  .iv-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 14px 16px;
+  }
+  .iv-actions { flex-wrap: wrap; }
+  .upcoming-bar { padding: 10px 14px; }
+  .upcoming-bar .right { width: 100%; }
+  .upcoming-bar select { flex: 1; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="who-card">
+    <div class="ava">VR</div>
+    <div>
+      <strong>Vertex Resources</strong>
+      <span style="margin: 0 8px">·</span>
+      <span>4 of 12 roles accessible</span>
+    </div>
+  </div>
+
+  <a href="/feedback" class="feedback-alert">
+    <div class="alert-dot"></div>
+    <div class="alert-text">
+      <strong>3 new pieces of feedback</strong> from CastleBay on your candidates.
+      <span class="alert-meta">Most recent: 2h ago — Candidate 04766 advancing to client.</span>
+    </div>
+    <div class="alert-cta">View inbox →</div>
+  </a>
+
+  <div class="page-head">
+    <h1>Open roles</h1>
+    <p>Roles you've been invited to fill. Submit candidates directly.</p>
+  </div>
+
+  <div class="role-list">
+    <div class="role-bar">
+      <div class="label">Role</div>
+      <div class="label">Rate band</div>
+      <div class="label">My candidates</div>
+      <div class="label">Other vendors</div>
+      <div class="label" style="text-align:right">Action</div>
+    </div>
+
+    <div class="r-row">
+      <div>
+        <div class="r-name">Lead BA — Data (#5)(#10)</div>
+        <div class="r-client">2026 — Texas Farm Bureau · 2 needed</div>
+      </div>
+      <div class="r-rate">$135–165</div>
+      <div class="r-mine">
+        <strong>2</strong> active
+        <div class="competitor-line" style="color:var(--text-2)">
+          <span><span class="dot submitted"></span>1</span>
+          <span><span class="dot review"></span>1</span>
+        </div>
+      </div>
+      <div class="r-others">
+        <strong style="color:var(--text-2)">5</strong> active
+        <div class="competitor-line">
+          <span><span class="dot submitted"></span>2</span>
+          <span><span class="dot review"></span>1</span>
+          <span><span class="dot interview"></span>2</span>
+        </div>
+      </div>
+      <div class="r-action">+ Submit</div>
+    </div>
+
+    <div class="r-row">
+      <div>
+        <div class="r-name">Sr. BA (#3)</div>
+        <div class="r-client">2026 — Texas Farm Bureau</div>
+      </div>
+      <div class="r-rate">$130–155</div>
+      <div class="r-mine">
+        <strong>1</strong> active
+        <div class="competitor-line" style="color:var(--text-2)">
+          <span><span class="dot interview"></span>1</span>
+        </div>
+      </div>
+      <div class="r-others">
+        <strong style="color:var(--text-2)">7</strong> active
+      </div>
+      <div class="r-action">+ Submit</div>
+    </div>
+
+    <div class="r-row">
+      <div>
+        <div class="r-name">BC Tech Lead — Offshore</div>
+        <div class="r-client">2026 — Mutual of Enumclaw</div>
+      </div>
+      <div class="r-rate">$95–115</div>
+      <div class="r-mine">
+        <strong>0</strong> active
+      </div>
+      <div class="r-others">
+        <strong style="color:var(--text-2)">3</strong> active
+      </div>
+      <div class="r-action">+ Submit</div>
+    </div>
+
+    <div class="r-row">
+      <div>
+        <div class="r-name">DuckCreek QA — Offshore x9</div>
+        <div class="r-client">2026 — NTT Data</div>
+      </div>
+      <div class="r-rate">$70–90</div>
+      <div class="r-mine">
+        <strong>3</strong> active
+        <div class="competitor-line" style="color:var(--text-2)">
+          <span><span class="dot submitted"></span>2</span>
+          <span><span class="dot placed"></span>1</span>
+        </div>
+      </div>
+      <div class="r-others">
+        <strong style="color:var(--text-2)">11</strong> active
+      </div>
+      <div class="r-action">+ Submit</div>
+    </div>
+
+  </div>
+
+  <div class="upcoming">
+    <div class="upcoming-bar">
+      <div class="left">
+        <h2>Upcoming interviews</h2>
+        <span class="count">3 scheduled</span>
+      </div>
+      <div class="right">
+        <span>Show times in</span>
+        <select id="vendorTz">
+          <optgroup label="United States">
+            <option value="America/New_York">ET — Eastern</option>
+            <option value="America/Chicago">CT — Central</option>
+            <option value="America/Denver">MT — Mountain</option>
+            <option value="America/Los_Angeles" selected>PT — Pacific</option>
+          </optgroup>
+          <optgroup label="India">
+            <option value="Asia/Kolkata">IST — Kolkata</option>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+
+    <div class="iv-row">
+      <div class="iv-cand">
+        <span class="mono">04766</span> · <strong>Sr. BA · P&amp;C</strong>
+        <div class="role">TXFB · Lead BA — Data</div>
+      </div>
+      <div class="iv-time">
+        <div class="when">Tue May 14, 7:00 AM PT</div>
+        <div class="when-sub">10:00 AM ET · 7:30 PM IST · 60 min</div>
+      </div>
+      <div class="iv-with">
+        <div class="with">CastleBay screen with <strong>David Leduc</strong></div>
+        <div class="ctx">Round 1 · video</div>
+      </div>
+      <div class="iv-actions">
+        <a href="#" class="btn tiny">Reschedule</a>
+        <a href="#" class="btn tiny">.ics</a>
+        <a href="/feedback/04766" class="btn tiny primary">View</a>
+      </div>
+    </div>
+
+    <div class="iv-row">
+      <div class="iv-cand">
+        <span class="mono">04701</span> · <strong>Sr. BA · Data</strong>
+        <div class="role">TXFB · Sr. BA (#3)</div>
+      </div>
+      <div class="iv-time">
+        <div class="when">Wed May 15, 11:00 AM PT</div>
+        <div class="when-sub">2:00 PM ET · 11:30 PM IST · 45 min</div>
+      </div>
+      <div class="iv-with">
+        <div class="with">Client interview · <strong>TXFB panel</strong> (3)</div>
+        <div class="ctx">Final round · video</div>
+      </div>
+      <div class="iv-actions">
+        <a href="#" class="btn tiny">Reschedule</a>
+        <a href="#" class="btn tiny">.ics</a>
+        <a href="#" class="btn tiny primary">Prep</a>
+      </div>
+    </div>
+
+    <div class="iv-row">
+      <div class="iv-cand">
+        <span class="mono">04877</span> · <strong>DuckCreek QA</strong>
+        <div class="role">NTT · DuckCreek QA — Offshore</div>
+      </div>
+      <div class="iv-time">
+        <div class="when">Thu May 16, 9:30 PM PT</div>
+        <div class="when-sub">12:30 AM ET (Fri) · 10:00 AM IST (Fri) · 60 min</div>
+      </div>
+      <div class="iv-with">
+        <div class="with">CastleBay screen with <strong>Don R.</strong></div>
+        <div class="ctx">Round 1 · candidate based in Pune</div>
+      </div>
+      <div class="iv-actions">
+        <a href="#" class="btn tiny">Reschedule</a>
+        <a href="#" class="btn tiny">.ics</a>
+        <a href="#" class="btn tiny primary">Prep</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-bar">
+    <h2>My submissions</h2>
+    <div class="meta">6 active · 1 placed YTD</div>
+  </div>
+
+  <table class="t subs">
+    <thead>
+      <tr>
+        <th>Candidate</th>
+        <th>Role</th>
+        <th>Stage</th>
+        <th>Resume</th>
+        <th>Submitted</th>
+        <th>Rate</th>
+        <th>Last update</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="mono">04823</span> <span style="color:var(--text-3)">Sr. BA · Data</span></td>
+        <td>TXFB · Lead BA — Data</td>
+        <td><span class="stage-pill"><span class="dot submitted"></span>Submitted</span></td>
+        <td><span class="resume-pill ok">PDF · v1</span></td>
+        <td>2d ago</td>
+        <td class="mono">$140</td>
+        <td>—</td>
+      </tr>
+      <tr onclick="window.location='/feedback/04766'">
+        <td><span class="mono">04766</span> <span style="color:var(--text-3)">Sr. BA · P&amp;C</span></td>
+        <td>TXFB · Lead BA — Data</td>
+        <td><span class="stage-pill"><span class="dot interview"></span>Interview</span></td>
+        <td><span class="resume-pill ok">PDF · v2 (CB-formatted)</span></td>
+        <td>5d ago</td>
+        <td class="mono">$148</td>
+        <td><a href="/feedback/04766" style="color:var(--accent); text-decoration:none;">view feedback →</a></td>
+      </tr>
+      <tr>
+        <td><span class="mono">04701</span> <span style="color:var(--text-3)">Sr. BA · Data</span></td>
+        <td>TXFB · Sr. BA (#3)</td>
+        <td><span class="stage-pill"><span class="dot interview"></span>Interview</span></td>
+        <td><span class="resume-pill ok">PDF · v1</span></td>
+        <td>9d ago</td>
+        <td class="mono">$152</td>
+        <td>today</td>
+      </tr>
+      <tr>
+        <td><span class="mono">04522</span> <span style="color:var(--text-3)">Sr. BA · Insurance</span></td>
+        <td>TXFB · Lead BA — Data</td>
+        <td><span class="stage-pill"><span class="dot placed"></span>Placed</span></td>
+        <td><span class="resume-pill ok">DOCX · v1</span></td>
+        <td>14d ago</td>
+        <td class="mono">$170</td>
+        <td>8d ago</td>
+      </tr>
+      <tr>
+        <td><span class="mono">04598</span> <span style="color:var(--text-3)">BA · light data</span></td>
+        <td>TXFB · Lead BA — Data</td>
+        <td><span class="stage-pill"><span class="dot declined"></span>Declined</span></td>
+        <td><span class="resume-pill ok">PDF · v1</span></td>
+        <td>11d ago</td>
+        <td class="mono">$120</td>
+        <td>4d ago</td>
+      </tr>
+      <tr>
+        <td><span class="mono">04877</span> <span style="color:var(--text-3)">DuckCreek QA</span></td>
+        <td>NTT · DuckCreek QA — Offshore</td>
+        <td><span class="stage-pill"><span class="dot submitted"></span>Submitted</span></td>
+        <td><span class="resume-pill missing">⚠ missing — <a href="#" style="color:inherit; text-decoration:underline;">upload</a></span></td>
+        <td>1d ago</td>
+        <td class="mono">$78</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="privacy-note">
+    <strong>Why you see counts but not names for other vendors:</strong>
+    Competitive transparency without exposing other firms' candidate identities — by design (Decision #104).
+  </div>
+
+</div>
+
+
+{% endblock %}

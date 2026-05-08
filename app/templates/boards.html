@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Boards — CastleBay Portal Preview{% endblock %}
+{% block brand_context %}Portal{% endblock %}
+
+{% block extra_css %}
+.board-list {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.row {
+  display: grid;
+  grid-template-columns: 1fr 100px 240px 80px;
+  gap: 24px;
+  align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+.row:last-child { border-bottom: 0; }
+.row:hover { background: var(--surface-2); }
+.row.head { background: var(--surface-2); cursor: default; padding: 10px 20px; }
+.row.head .label { color: var(--text-3); }
+
+.board-name { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; }
+.board-id { font-size: 11px; color: var(--text-3); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+.col-num { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; color: var(--text); text-align: right; }
+.bar-mini { display: flex; height: 6px; border-radius: 100px; overflow: hidden; background: var(--surface-2); }
+[data-theme="dark"] .bar-mini { background: var(--bg); }
+.bar-mini > span { display: block; height: 100%; }
+
+.legend { display: flex; gap: 18px; margin-top: 12px; font-size: 11px; color: var(--text-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+.foot-note {
+  margin-top: 24px;
+  padding: 14px 18px;
+  background: var(--surface-2);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
+.foot-note strong { color: var(--text); font-weight: 500; }
+
+@media (max-width: 900px) {
+  .row, .row.head { grid-template-columns: 1fr 60px; gap: 10px; }
+  .row.head .label:nth-child(3), .row.head .label:nth-child(4) { display: none; }
+  .row > div:nth-child(3), .row .col-num:nth-child(3) { display: none; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-head">
+    <h1>Staffing boards</h1>
+    <p>Active engagements imported from Monday.com.</p>
+  </div>
+
+  <div class="board-list">
+    <div class="row head">
+      <div class="label">Board</div>
+      <div class="label" style="text-align:right">Open roles</div>
+      <div class="label">Pipeline</div>
+      <div class="label" style="text-align:right">Candidates</div>
+    </div>
+
+    {% for b in boards %}
+    <a href="/drilldown?board_id={{ b.id }}" class="row">
+      <div>
+        <div class="board-name">{{ b.name }}</div>
+        <div class="board-id">{{ b.id }}</div>
+      </div>
+      <div class="col-num">{{ b.role_count if b.role_count is not none else '—' }}</div>
+      <div>
+        <div class="bar-mini">
+          {% for stage, pct in b.pipeline_pct.items() %}
+          <span style="width:{{ pct }}%; background:{{ b.pipeline_colors[stage] }}"></span>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-num">{{ b.total_candidates if b.total_candidates is not none else '—' }}</div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <div class="legend">
+    <span><span class="dot submitted"></span>Submitted</span>
+    <span><span class="dot review"></span>In Review</span>
+    <span><span class="dot interview"></span>Interview</span>
+    <span><span class="dot placed"></span>Placed</span>
+    <span><span class="dot declined"></span>Declined / On Hold</span>
+  </div>
+
+  {% if monday_error %}
+  <div class="foot-note" style="border-color: var(--warn); color: var(--warn);">
+    <strong>Monday unreachable</strong> — counts shown as "—". Error: {{ monday_error }}
+  </div>
+  {% else %}
+  <div class="foot-note">
+    <strong>Live data</strong> — fetched from Monday.com API at {{ fetched_at }} ({{ cache_status }}).
+    Pipeline buckets are <code class="mono">STATUS_DISPLAY_BUCKETS</code> from the prod portal.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

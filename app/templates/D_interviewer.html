@@ -1,0 +1,831 @@
+{% extends "base.html" %}
+{% block title %}CastleBay Portal — Interviewer{% endblock %}
+{% set active_nav = "interviewer" %}
+
+{% block extra_css %}
+.layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: calc(100vh - 90px);
+}
+.col {
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.col:last-child { border-right: 0; background: var(--surface-2); }
+[data-theme="dark"] .col:last-child { background: var(--bg); }
+
+.col-head {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.col-head h2 {
+  font-size: 11px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+.col-head .count {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.queue { flex: 1; overflow-y: auto; }
+.q-row {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  border-left: 2px solid transparent;
+  cursor: pointer;
+}
+.q-row:hover { background: var(--surface-2); }
+.q-row.on {
+  background: var(--surface-2);
+  border-left-color: var(--navy);
+}
+.q-ref {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.q-role {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+.q-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+}
+.q-status {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+}
+[data-theme="dark"] .q-status { background: var(--surface); }
+.q-status.pending { color: var(--warn); border-color: rgba(201,122,20,.4); }
+.q-status.done { color: var(--success); border-color: rgba(45,138,95,.4); }
+.q-when {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Right pane */
+.detail {
+  padding: 32px 36px;
+  overflow-y: auto;
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+}
+.detail-head { margin-bottom: 28px; }
+.detail-head h1 {
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+.detail-head .meta {
+  font-size: 12px;
+  color: var(--text-2);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.context-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 18px;
+  margin-bottom: 24px;
+}
+.context-grid > div .label { margin-bottom: 4px; }
+.context-grid > div .val {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+}
+.context-grid > div .val.mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.form {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 28px;
+}
+.form h3 {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+.form .form-sub {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-bottom: 24px;
+}
+.field { margin-bottom: 22px; }
+.field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+.field label .src {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-3);
+  text-transform: none;
+  font-weight: 400;
+  margin-left: 8px;
+  letter-spacing: 0;
+}
+.field input[type="text"],
+.field input[type="date"],
+.field textarea,
+.field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+}
+[data-theme="dark"] .field input,
+[data-theme="dark"] .field textarea,
+[data-theme="dark"] .field select { background: var(--surface); }
+.field textarea {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.55;
+}
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.rating {
+  display: flex;
+  gap: 6px;
+}
+.rating label {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px 8px;
+  text-align: center;
+  cursor: pointer;
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-2);
+  background: var(--bg);
+  transition: all .12s;
+}
+[data-theme="dark"] .rating label { background: var(--surface); }
+.rating label:hover { border-color: var(--text-3); }
+.rating input { display: none; }
+.rating input:checked + .rating-content {
+  color: var(--text);
+  font-weight: 500;
+}
+.rating label.on {
+  border-color: var(--navy);
+  background: rgba(0,45,86,.04);
+  color: var(--text);
+}
+[data-theme="dark"] .rating label.on { background: rgba(93,139,184,.1); }
+.rating .num {
+  font-size: 18px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+}
+.rating .lab {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.qual-toggle {
+  display: flex;
+  gap: 8px;
+}
+.qual-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+[data-theme="dark"] .qual-btn { background: var(--surface); }
+.qual-btn.on.yes {
+  border-color: var(--success);
+  background: rgba(45,138,95,.06);
+  color: var(--success);
+}
+.qual-btn.on.no {
+  border-color: var(--danger);
+  background: rgba(177,58,58,.06);
+  color: var(--danger);
+}
+
+.form-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 22px;
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.form-foot .info {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.form-foot .actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* AVAILABILITY PICKER */
+.avail {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 24px 24px 20px;
+  margin-bottom: 20px;
+}
+.avail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+.avail-head h3 {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+.avail-head .form-sub {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.avail-head .selected-count {
+  font-size: 11px;
+  color: var(--text-2);
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--surface-2);
+  padding: 5px 10px;
+  border-radius: 100px;
+}
+.avail-head .selected-count strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.week-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-2);
+  margin-bottom: 14px;
+}
+.week-nav button {
+  width: 24px; height: 24px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-2);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  display: grid;
+  place-items: center;
+}
+[data-theme="dark"] .week-nav button { background: var(--surface); }
+.week-nav button:hover { color: var(--text); border-color: var(--text-3); }
+.week-nav .week-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+.week-nav .week-mode {
+  margin-left: auto;
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 11px;
+}
+.week-nav .week-mode button {
+  padding: 4px 10px;
+  border: 0;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  width: auto;
+  height: auto;
+}
+.week-nav .week-mode button:last-child { border-right: 0; }
+.week-nav .week-mode button.on {
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.tz-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+.tz-row .tz-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+  font-weight: 500;
+}
+.tz-row select {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--text);
+  min-width: 220px;
+}
+[data-theme="dark"] .tz-row select { background: var(--surface); }
+.tz-row .tz-shortcut {
+  display: flex;
+  gap: 4px;
+}
+.tz-row .tz-pill {
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-2);
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+}
+[data-theme="dark"] .tz-row .tz-pill { background: var(--surface); }
+.tz-row .tz-pill:hover { color: var(--text); border-color: var(--text-3); }
+.tz-row .tz-pill.on {
+  background: var(--navy);
+  color: white;
+  border-color: var(--navy);
+}
+.tz-row .tz-meta {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.avail-grid {
+  display: grid;
+  grid-template-columns: 50px repeat(5, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+[data-theme="dark"] .avail-grid { background: var(--bg); }
+.avail-day-head {
+  padding: 10px 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+  text-align: center;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+[data-theme="dark"] .avail-day-head { background: var(--surface); }
+.avail-day-head:last-child { border-right: 0; }
+.avail-day-head strong {
+  display: block;
+  font-size: 16px;
+  color: var(--text);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-top: 2px;
+}
+.avail-day-head.today strong { color: var(--accent); }
+.avail-day-head.weekend { color: var(--text-3); opacity: .5; }
+
+.avail-time {
+  padding: 6px 8px;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-3);
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+}
+[data-theme="dark"] .avail-time { background: var(--surface); }
+.avail-slot {
+  height: 26px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  background: var(--bg);
+  transition: background .08s;
+}
+[data-theme="dark"] .avail-slot { background: var(--surface); }
+.avail-slot:hover { background: var(--surface-2); }
+[data-theme="dark"] .avail-slot:hover { background: var(--bg); }
+.avail-slot:last-child { border-right: 0; }
+.avail-slot.on {
+  background: var(--accent);
+  border-color: var(--navy-2);
+}
+.avail-slot.on:hover { background: var(--navy-2); }
+.avail-slot.busy {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--surface-2),
+    var(--surface-2) 4px,
+    var(--bg) 4px,
+    var(--bg) 8px
+  );
+  cursor: not-allowed;
+}
+.avail-slot.busy:hover { background: repeating-linear-gradient(
+    45deg,
+    var(--surface-2),
+    var(--surface-2) 4px,
+    var(--bg) 4px,
+    var(--bg) 8px
+  ); }
+
+.avail-legend {
+  display: flex;
+  gap: 18px;
+  margin-top: 14px;
+  font-size: 11px;
+  color: var(--text-2);
+  align-items: center;
+}
+.avail-legend .swatch {
+  display: inline-block;
+  width: 14px; height: 10px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.avail-legend .swatch.free { background: var(--bg); }
+[data-theme="dark"] .avail-legend .swatch.free { background: var(--surface); }
+.avail-legend .swatch.picked { background: var(--accent); border-color: var(--navy-2); }
+.avail-legend .swatch.busy {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--surface-2),
+    var(--surface-2) 3px,
+    var(--bg) 3px,
+    var(--bg) 6px
+  );
+}
+
+.avail-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 18px;
+  margin-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.avail-foot .info {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.avail-foot .actions {
+  display: flex;
+  gap: 8px;
+}
+
+.collapsible {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.collapsible-head {
+  padding: 14px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+.collapsible-head:hover { background: var(--surface-2); }
+.collapsible-head h3 {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.collapsible-head .meta {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+}
+.collapsible-head .chev {
+  color: var(--text-3);
+  transition: transform .2s;
+}
+.collapsible.open .collapsible-head .chev { transform: rotate(90deg); }
+.collapsible-body {
+  display: none;
+  padding: 4px 22px 22px;
+  border-top: 1px solid var(--border);
+}
+.collapsible.open .collapsible-body { display: block; }
+
+/* MOBILE */
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .col {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    max-height: 280px;
+  }
+  .col:last-child { max-height: none; }
+  .detail { padding: 18px 16px 60px; }
+  .context-grid { grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px; }
+  .avail { padding: 16px 12px; }
+  .avail-grid {
+    grid-template-columns: 40px repeat(5, minmax(50px, 1fr));
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .avail-time { font-size: 9px; padding: 4px 6px; }
+  .tz-row { font-size: 11px; }
+  .tz-row select { min-width: 0; flex: 1; }
+  .tz-row .tz-meta { width: 100%; margin-left: 0; margin-top: 4px; }
+  .rating { gap: 4px; }
+  .rating label { padding: 10px 4px; }
+  .rating .num { font-size: 15px; }
+  .qual-toggle { flex-direction: column; }
+  .form { padding: 18px 16px; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="layout">
+
+  <aside class="col">
+    <div class="col-head">
+      <h2>My interviews</h2>
+      <span class="count">5</span>
+    </div>
+    <div class="queue">
+      <div class="q-row on">
+        <div class="q-ref">04766</div>
+        <div class="q-role">Sr. BA · P&amp;C — TXFB</div>
+        <div class="q-meta">
+          <span class="q-status pending">Availability needed</span>
+          <span class="q-when">requested 1d</span>
+        </div>
+      </div>
+      <div class="q-row">
+        <div class="q-ref">04812</div>
+        <div class="q-role">Lead BA · MoE</div>
+        <div class="q-meta">
+          <span class="q-status pending">Availability needed</span>
+          <span class="q-when">requested 2d</span>
+        </div>
+      </div>
+      <div class="q-row">
+        <div class="q-ref">04701</div>
+        <div class="q-role">Sr. BA · Data — TXFB</div>
+        <div class="q-meta">
+          <span class="q-status">Scheduled</span>
+          <span class="q-when">May 13 · 10am</span>
+        </div>
+      </div>
+      <div class="q-row">
+        <div class="q-ref">04688</div>
+        <div class="q-role">Lead BA — TXFB</div>
+        <div class="q-meta">
+          <span class="q-status pending">Feedback due</span>
+          <span class="q-when">interviewed May 6</span>
+        </div>
+      </div>
+      <div class="q-row">
+        <div class="q-ref">04522</div>
+        <div class="q-role">Sr. BA · TXFB</div>
+        <div class="q-meta">
+          <span class="q-status done">Submitted</span>
+          <span class="q-when">Apr 30</span>
+        </div>
+      </div>
+      <div class="q-row">
+        <div class="q-ref">04477</div>
+        <div class="q-role">DC QA · NTT</div>
+        <div class="q-meta">
+          <span class="q-status done">Submitted</span>
+          <span class="q-when">Apr 28</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="col">
+    <div class="detail">
+      <div class="detail-head">
+        <h1>Candidate 04766 — Sr. BA, P&amp;C</h1>
+        <div class="meta">TXFB · Lead BA — Data · monday item 11704512899</div>
+      </div>
+
+      <div class="context-grid">
+        <div>
+          <div class="label">Role</div>
+          <div class="val">Lead BA — Data</div>
+        </div>
+        <div>
+          <div class="label">Submitted by</div>
+          <div class="val">Vertex Resources</div>
+        </div>
+        <div>
+          <div class="label">Submitted rate</div>
+          <div class="val mono">$148/hr</div>
+        </div>
+        <div>
+          <div class="label">Status</div>
+          <div class="val">Awaiting your availability</div>
+        </div>
+      </div>
+
+      <!-- AVAILABILITY PICKER -->
+      <div class="avail" id="availPicker">
+        <div class="avail-head">
+          <div>
+            <h3>Tell us when you're free</h3>
+            <p class="form-sub">Pick all 30-min windows that work. CastleBay confirms one with the client and emails you a calendar invite.</p>
+          </div>
+          <div class="selected-count"><strong id="selCount">0</strong> slots picked</div>
+        </div>
+
+        <div class="week-nav">
+          <button aria-label="Previous week">‹</button>
+          <button aria-label="Next week">›</button>
+          <span class="week-label" id="weekLabel">Week of May 11, 2026</span>
+          <div class="week-mode">
+            <button class="on">This week</button>
+            <button>Next week</button>
+          </div>
+        </div>
+
+        <div class="tz-row">
+          <span class="tz-label">Times in</span>
+          <select id="tzSelect" onchange="onTzChange()">
+            <optgroup label="United States">
+              <option value="America/New_York">Eastern · ET (New York)</option>
+              <option value="America/Chicago">Central · CT (Chicago)</option>
+              <option value="America/Denver">Mountain · MT (Denver)</option>
+              <option value="America/Los_Angeles">Pacific · PT (Los Angeles)</option>
+            </optgroup>
+            <optgroup label="India">
+              <option value="Asia/Kolkata">India · IST (Kolkata)</option>
+            </optgroup>
+            <optgroup label="Other">
+              <option value="Europe/London">UK · GMT/BST (London)</option>
+              <option value="Asia/Singapore">Singapore · SGT</option>
+              <option value="Australia/Sydney">Sydney · AET</option>
+            </optgroup>
+          </select>
+          <span class="tz-shortcut">
+            <button type="button" class="tz-pill" data-tz="America/New_York">ET</button>
+            <button type="button" class="tz-pill" data-tz="America/Los_Angeles">PT</button>
+            <button type="button" class="tz-pill" data-tz="Asia/Kolkata">IST</button>
+          </span>
+          <span class="tz-meta" id="tzMeta">your local time</span>
+        </div>
+
+        <div class="avail-grid" id="availGrid">
+          <!-- generated by JS -->
+        </div>
+
+        <div class="avail-legend">
+          <span><span class="swatch free"></span>Available to pick</span>
+          <span><span class="swatch picked"></span>You're free then</span>
+          <span><span class="swatch busy"></span>Already booked</span>
+        </div>
+
+        <div class="avail-foot">
+          <div class="info">Stored as JSON on the role item — CastleBay schedules from your picks.</div>
+          <div class="actions">
+            <button type="button" class="btn" onclick="clearSlots()">Clear</button>
+            <button type="button" class="btn primary preview-disabled-tooltip preview-disabled" onclick="alert('Mock — would write availability_json to Monday')">Submit availability</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- FEEDBACK FORM (visible alongside availability) -->
+      <form class="form" onsubmit="event.preventDefault(); alert('Mock — would write to Monday cb_interview_* columns');">
+        <div class="avail-head" style="margin-bottom:18px;">
+          <div>
+            <h3>Submit feedback (after the interview)</h3>
+            <p class="form-sub">Becomes visible to the submitting vendor and CastleBay's internal team.</p>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Interview date <span class="src">cb_interview_date</span></label>
+          <input type="date" value="">
+        </div>
+
+        <div class="field">
+          <label>Interviewer <span class="src">cb_interviewer</span></label>
+          <input type="text" value="David Leduc" readonly style="opacity:.7">
+        </div>
+
+        <div class="field">
+          <label>Rating <span class="src">cb_interview_rating · 1–5</span></label>
+          <div class="rating">
+            <label><span class="num">1</span><span class="lab">No</span></label>
+            <label><span class="num">2</span><span class="lab">Weak</span></label>
+            <label><span class="num">3</span><span class="lab">OK</span></label>
+            <label><span class="num">4</span><span class="lab">Strong</span></label>
+            <label><span class="num">5</span><span class="lab">Excellent</span></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Qualified <span class="src">cb_qualified</span></label>
+          <div class="qual-toggle">
+            <button type="button" class="qual-btn">Yes — advance</button>
+            <button type="button" class="qual-btn">Maybe</button>
+            <button type="button" class="qual-btn">No — decline</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Notes <span class="src">cb_interview_notes</span></label>
+          <textarea placeholder="Strengths, concerns, technical depth, fit, anything CastleBay should know before submitting to client."></textarea>
+        </div>
+
+        <div class="form-foot">
+          <div class="info">Saving updates Monday status to <code class="mono">customer_interview</code> and emails the submitting vendor.</div>
+          <div class="actions">
+            <button type="button" class="btn">Save draft</button>
+            <button type="submit" class="btn primary preview-disabled-tooltip preview-disabled preview-disabled-tooltip preview-disabled">Submit feedback</button>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </main>
+</div>
+
+
+{% endblock %}

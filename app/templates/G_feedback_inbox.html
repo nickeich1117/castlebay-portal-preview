@@ -1,0 +1,462 @@
+{% extends "base.html" %}
+{% block title %}CastleBay Portal — Feedback Inbox{% endblock %}
+{% set active_nav = "feedback" %}
+
+{% block extra_css %}
+.page { max-width: 920px; margin: 0 auto; padding: 32px 28px 80px; }
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 18px;
+}
+.kpi.unread {
+  border-color: rgba(62,150,201,.4);
+  background: linear-gradient(180deg, rgba(62,150,201,.04), var(--surface));
+}
+[data-theme="dark"] .kpi.unread {
+  background: linear-gradient(180deg, rgba(62,150,201,.08), var(--surface));
+}
+.kpi .label { margin-bottom: 6px; }
+.kpi .val {
+  font-size: 26px;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.kpi.unread .val { color: var(--accent); }
+.kpi .sub {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 6px;
+}
+
+.toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+.toolbar-row h2 {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+}
+.filters {
+  display: flex;
+  gap: 4px;
+}
+.filter-pill {
+  padding: 5px 11px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-2);
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+[data-theme="dark"] .filter-pill { background: var(--surface); }
+.filter-pill:hover { color: var(--text); border-color: var(--text-3); }
+.filter-pill.on {
+  background: var(--navy);
+  color: white;
+  border-color: var(--navy);
+}
+
+.feed {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.fb-row {
+  display: grid;
+  grid-template-columns: 14px 1fr 110px 100px 80px 16px;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .12s;
+  position: relative;
+}
+.fb-row:last-child { border-bottom: 0; }
+.fb-row:hover { background: var(--surface-2); }
+
+.fb-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(62,150,201,.18);
+}
+.fb-row.read .fb-unread-dot { background: transparent; box-shadow: none; }
+
+.fb-main { min-width: 0; }
+.fb-line1 {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+.fb-line1 .ref {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 500;
+}
+.fb-line1 .role {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.fb-row.read .fb-line1 .role { font-weight: 400; color: var(--text-2); }
+.fb-line1 .client {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.fb-snippet {
+  font-size: 12px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.45;
+}
+.fb-row.read .fb-snippet { color: var(--text-3); }
+
+.fb-verdict {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 100px;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+.fb-verdict.advance {
+  background: rgba(45,138,95,.1);
+  color: var(--success);
+}
+.fb-verdict.maybe {
+  background: rgba(201,122,20,.12);
+  color: var(--warn);
+}
+.fb-verdict.decline {
+  background: rgba(108,122,137,.15);
+  color: var(--text-2);
+}
+
+.fb-rating {
+  display: flex;
+  gap: 1px;
+  justify-content: flex-start;
+}
+.fb-rating .star {
+  width: 11px; height: 11px;
+}
+.fb-rating .star.on { color: var(--success); }
+.fb-rating .star.off { color: var(--border); }
+[data-theme="dark"] .fb-rating .star.off { color: var(--text-3); opacity: .3; }
+.fb-rating.decline .star.on { color: var(--text-2); }
+
+.fb-when {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+  text-align: right;
+  white-space: nowrap;
+}
+.fb-row.read .fb-when { color: var(--text-3); }
+
+.fb-arrow {
+  color: var(--text-3);
+  font-size: 14px;
+  text-align: right;
+}
+.fb-row:hover .fb-arrow { color: var(--navy-2); }
+
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 12px;
+}
+.section-divider .label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  font-weight: 500;
+}
+.section-divider .line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.empty-state {
+  padding: 32px 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.archived-link {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.archived-link a { color: var(--accent); }
+
+.banner {
+  padding: 12px 16px;
+  background: rgba(62,150,201,.06);
+  border: 1px solid rgba(62,150,201,.2);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-2);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.banner svg { color: var(--accent); flex-shrink: 0; }
+.banner strong { color: var(--text); font-weight: 500; }
+
+/* MOBILE */
+@media (max-width: 900px) {
+  .summary { grid-template-columns: 1fr 1fr; }
+  .summary .kpi:last-child { grid-column: span 2; }
+  .fb-row {
+    grid-template-columns: 14px 1fr auto;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+  .fb-row .fb-rating { display: none; }
+  .fb-row .fb-when { display: none; }
+  .fb-row .fb-arrow { display: none; }
+  .fb-snippet { white-space: normal; max-height: 38px; overflow: hidden; }
+  .filters { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="crumbs">
+  <a href="/vendor">Dashboard</a>
+  <span class="sep">›</span>
+  <strong>Feedback inbox</strong>
+</div>
+
+<div class="page">
+
+  <div class="page-head">
+    <h1>Feedback inbox</h1>
+    <p>Interview feedback from CastleBay on your submitted candidates.</p>
+  </div>
+
+  <div class="summary">
+    <div class="kpi unread">
+      <div class="label">Unread</div>
+      <div class="val">3</div>
+      <div class="sub">since you last visited</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Advancing to client</div>
+      <div class="val">2</div>
+      <div class="sub">this month</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Avg rating · YTD</div>
+      <div class="val">3.6<span style="font-size:14px; color:var(--text-3); margin-left:4px;">/5</span></div>
+      <div class="sub">across 12 candidates</div>
+    </div>
+  </div>
+
+  <div class="banner">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+    <span>You'll get an email each time CastleBay posts new feedback. <strong>Manage notifications →</strong></span>
+  </div>
+
+  <div class="toolbar-row">
+    <h2>Inbox</h2>
+    <div class="filters">
+      <button class="filter-pill on">All <span style="opacity:.6">8</span></button>
+      <button class="filter-pill">Unread <span style="opacity:.6">3</span></button>
+      <button class="filter-pill">Advancing <span style="opacity:.6">2</span></button>
+      <button class="filter-pill">Maybe <span style="opacity:.6">1</span></button>
+      <button class="filter-pill">Declined <span style="opacity:.6">2</span></button>
+    </div>
+  </div>
+
+  <!-- UNREAD -->
+  <div class="feed">
+
+    <div class="fb-row" onclick="window.location='/feedback/04766'">
+      <div class="fb-unread-dot"></div>
+      <div class="fb-main">
+        <div class="fb-line1">
+          <span class="ref">04766</span>
+          <span class="role">Sr. BA · P&amp;C</span>
+          <span class="client">→ TXFB · Lead BA — Data</span>
+        </div>
+        <div class="fb-snippet">"Strong on data modeling and stakeholder communication. Good grasp of P&amp;C domain. Recommend advancing to client interview…"</div>
+      </div>
+      <div class="fb-verdict advance">Advancing</div>
+      <div class="fb-rating">
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star off" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+      </div>
+      <div class="fb-when">2h ago</div>
+      <div class="fb-arrow">›</div>
+    </div>
+
+    <div class="fb-row" onclick="window.location='/feedback/04766'">
+      <div class="fb-unread-dot"></div>
+      <div class="fb-main">
+        <div class="fb-line1">
+          <span class="ref">04701</span>
+          <span class="role">Sr. BA · Data</span>
+          <span class="client">→ TXFB · Sr. BA (#3)</span>
+        </div>
+        <div class="fb-snippet">"Solid technical depth on data warehousing. Communication style may not match TXFB's stakeholder dynamics — recommend a second look…"</div>
+      </div>
+      <div class="fb-verdict maybe">Maybe</div>
+      <div class="fb-rating">
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star off" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star off" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+      </div>
+      <div class="fb-when">5h ago</div>
+      <div class="fb-arrow">›</div>
+    </div>
+
+    <div class="fb-row" onclick="window.location='/feedback/04766'">
+      <div class="fb-unread-dot"></div>
+      <div class="fb-main">
+        <div class="fb-line1">
+          <span class="ref">04877</span>
+          <span class="role">DuckCreek QA</span>
+          <span class="client">→ NTT · DuckCreek QA — Offshore</span>
+        </div>
+        <div class="fb-snippet">"Strong DuckCreek configuration experience, comfortable with offshore team coordination. Advancing to client this week."</div>
+      </div>
+      <div class="fb-verdict advance">Advancing</div>
+      <div class="fb-rating">
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star off" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+      </div>
+      <div class="fb-when">yesterday</div>
+      <div class="fb-arrow">›</div>
+    </div>
+
+  </div>
+
+  <div class="section-divider">
+    <span class="label">Earlier</span>
+    <span class="line"></span>
+  </div>
+
+  <!-- READ -->
+  <div class="feed">
+
+    <div class="fb-row read" onclick="window.location='/feedback/04766'">
+      <div class="fb-unread-dot"></div>
+      <div class="fb-main">
+        <div class="fb-line1">
+          <span class="ref">04522</span>
+          <span class="role">Sr. BA · Insurance</span>
+          <span class="client">→ TXFB · Lead BA — Data</span>
+        </div>
+        <div class="fb-snippet">"Excellent — placed at TXFB, starts May 19."</div>
+      </div>
+      <div class="fb-verdict advance">Placed</div>
+      <div class="fb-rating">
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+      </div>
+      <div class="fb-when">May 1</div>
+      <div class="fb-arrow">›</div>
+    </div>
+
+    <div class="fb-row read" onclick="window.location='/feedback/04766'">
+      <div class="fb-unread-dot"></div>
+      <div class="fb-main">
+        <div class="fb-line1">
+          <span class="ref">04598</span>
+          <span class="role">BA · light data</span>
+          <span class="client">→ TXFB · Lead BA — Data</span>
+        </div>
+        <div class="fb-snippet">"Below the experience bar TXFB needs for this role. Suggest considering for Sr. BA (#3) instead — lower seniority requirement."</div>
+      </div>
+      <div class="fb-verdict decline">Declined</div>
+      <div class="fb-rating decline">
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star off" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star off" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star off" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+      </div>
+      <div class="fb-when">Apr 28</div>
+      <div class="fb-arrow">›</div>
+    </div>
+
+    <div class="fb-row read" onclick="window.location='/feedback/04766'">
+      <div class="fb-unread-dot"></div>
+      <div class="fb-main">
+        <div class="fb-line1">
+          <span class="ref">04477</span>
+          <span class="role">DuckCreek QA</span>
+          <span class="client">→ NTT · DuckCreek QA — Offshore</span>
+        </div>
+        <div class="fb-snippet">"Domain match is good but rate is above NTT's offshore band — would need to come down ~15% to be viable."</div>
+      </div>
+      <div class="fb-verdict decline">Declined</div>
+      <div class="fb-rating decline">
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star off" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star off" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+      </div>
+      <div class="fb-when">Apr 24</div>
+      <div class="fb-arrow">›</div>
+    </div>
+
+  </div>
+
+  <div class="archived-link">
+    <a href="#">Show 12 archived →</a>
+  </div>
+
+</div>
+
+
+{% endblock %}

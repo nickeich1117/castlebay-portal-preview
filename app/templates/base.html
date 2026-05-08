@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}CastleBay Portal Preview{% endblock %}</title>
+<link rel="icon" type="image/png" href="/static/cb-favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/shared.css">
+<style>
+  .preview-banner {
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 16px;
+    font-size: 11px;
+    text-align: center;
+    color: var(--text-3);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.02em;
+  }
+  .preview-banner strong { color: var(--warn); font-weight: 600; }
+  .preview-disabled {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+    pointer-events: none;
+  }
+  .preview-disabled-tooltip {
+    position: relative;
+    pointer-events: auto;
+  }
+  .preview-disabled-tooltip:hover::after {
+    content: "Preview · writes disabled";
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: var(--bg);
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 100;
+  }
+  {% block extra_css %}{% endblock %}
+</style>
+</head>
+<body>
+
+<div class="preview-banner">
+  <strong>PREVIEW</strong> · read-only · all writes disabled · data live from Monday
+</div>
+
+<div class="bar">
+  <div class="brand">
+    <a href="/" style="display:flex; align-items:center; gap:14px; text-decoration:none; color:inherit;">
+      <img src="/static/castlebay_logo.png" alt="CastleBay" class="brand-logo">
+      <span class="brand-divider">/</span>
+      <span class="brand-context">{% block brand_context %}Portal{% endblock %}</span>
+    </a>
+  </div>
+  <nav class="bar-nav">
+    <a href="/boards" class="{% if active_nav == 'boards' %}active{% endif %}">Boards</a>
+    <a href="/drilldown" class="{% if active_nav == 'drilldown' %}active{% endif %}">Drill-Down</a>
+    <a href="/kanban" class="{% if active_nav == 'kanban' %}active{% endif %}">Kanban</a>
+    <a href="/vendor" class="{% if active_nav == 'vendor' %}active{% endif %}">Vendor View</a>
+    <a href="/feedback" class="{% if active_nav == 'feedback' %}active{% endif %}" style="position:relative;">
+      Feedback
+      <span style="position:absolute; top:2px; right:0; background:var(--accent); color:white; font-size:9px; padding:1px 5px; border-radius:100px; font-weight:600; font-family:'JetBrains Mono',monospace;">3</span>
+    </a>
+    <a href="/interviewer" class="{% if active_nav == 'interviewer' %}active{% endif %}">Interviewer</a>
+  </nav>
+  <div class="bar-right">
+    <button class="toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+    </button>
+    {% if user %}
+    <div class="who"><strong>{{ user.display_name or user.email }}</strong>
+      <a href="/logout" style="margin-left:8px; color:var(--text-3); font-size:11px;">log out</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% block crumbs %}{% endblock %}
+
+{% block content %}{% endblock %}
+
+<script>
+function toggleTheme() {
+  const r = document.documentElement;
+  const n = r.dataset.theme === 'dark' ? 'light' : 'dark';
+  r.dataset.theme = n;
+  localStorage.setItem('cb-theme', n);
+}
+const s = localStorage.getItem('cb-theme');
+if (s) document.documentElement.dataset.theme = s;
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+{% block title %}CastleBay Portal — Kanban{% endblock %}
+{% set active_nav = "kanban" %}
+
+{% block extra_css %}
+.role-context {
+  padding: 14px 32px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.role-context .left { display: flex; align-items: center; gap: 16px; }
+.role-context h1 {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+.role-context .meta {
+  font-size: 12px;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+}
+.role-context .right { display: flex; align-items: center; gap: 8px; }
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 11px;
+}
+.view-toggle a {
+  padding: 6px 12px;
+  color: var(--text-2);
+  border-right: 1px solid var(--border);
+}
+.view-toggle a:last-child { border-right: 0; }
+.view-toggle a.on {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 500;
+}
+[data-theme="dark"] .view-toggle a.on { background: var(--surface-2); }
+
+.kanban-wrap {
+  padding: 16px 24px 40px;
+  overflow-x: auto;
+}
+.kanban {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(260px, 1fr));
+  gap: 12px;
+  min-width: 1700px;
+}
+.col-k {
+  background: var(--surface-2);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex; flex-direction: column;
+  max-height: calc(100vh - 200px);
+}
+[data-theme="dark"] .col-k { background: var(--surface); }
+.col-k-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 6px 10px;
+}
+.col-k-head .name {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-2);
+}
+.col-k-head .count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.cards {
+  display: flex; flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+.card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  cursor: grab;
+  transition: all .12s;
+}
+.card:hover {
+  border-color: var(--text-3);
+  background: var(--surface);
+}
+[data-theme="dark"] .card:hover { background: var(--surface-2); }
+.card .ref {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.card .role-line {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card .row {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.card .row .vendor { color: var(--text-2); }
+.card .row .rate {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.banner {
+  margin: 0 32px 0;
+  padding: 8px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.banner svg { color: var(--accent); flex-shrink: 0; }
+
+/* MOBILE */
+@media (max-width: 900px) {
+  .role-context {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+  }
+  .role-context .right { width: 100%; justify-content: space-between; }
+  .kanban-wrap { padding: 12px 16px 40px; overflow-x: visible; }
+  .kanban {
+    grid-template-columns: 1fr;
+    min-width: 0;
+    gap: 10px;
+  }
+  .col-k {
+    max-height: none;
+  }
+  .cards { max-height: 280px; }
+  .banner { margin: 12px 16px 0 !important; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="crumbs">
+  <a href="/boards">Boards</a>
+  <span class="sep">›</span>
+  <a href="/drilldown">2026 — Texas Farm Bureau Staffing</a>
+  <span class="sep">›</span>
+  <strong>Lead BA — Data (#5)(#10)</strong>
+</div>
+
+<div class="role-context">
+  <div class="left">
+    <div>
+      <h1>Lead BA — Data (#5)(#10)</h1>
+      <div class="meta">TXFB · 10946536469 · 2 needed · $135–165/hr</div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="view-toggle">
+      <a href="/drilldown">Drill-Down</a>
+      <a href="/kanban" class="on">Kanban</a>
+    </div>
+    <button class="btn primary preview-disabled-tooltip preview-disabled">+ Submit candidate</button>
+  </div>
+</div>
+
+<div class="banner" style="margin: 12px 24px 0;">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  Drag a card to change its <code class="mono">engagement_status</code>. Updates sync to Monday.
+</div>
+
+<div class="kanban-wrap">
+  <div class="kanban">
+
+    <div class="col-k">
+      <div class="col-k-head">
+        <div class="name"><span class="dot submitted"></span>Submitted</div>
+        <span class="count">3</span>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <div class="ref">04823</div>
+          <div class="role-line">Sr. BA · Data</div>
+          <div class="row"><span class="vendor">Vertex Resources</span><span class="rate">$140</span></div>
+        </div>
+        <div class="card">
+          <div class="ref">04891</div>
+          <div class="role-line">Lead BA · Insurance</div>
+          <div class="row"><span class="vendor">Apex Talent</span><span class="rate">$155</span></div>
+        </div>
+        <div class="card">
+          <div class="ref">04902</div>
+          <div class="role-line">Sr. BA</div>
+          <div class="row"><span class="vendor">CastleBay Infotech</span><span class="rate">$135</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-k">
+      <div class="col-k-head">
+        <div class="name"><span class="dot review"></span>In Review</div>
+        <span class="count">2</span>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <div class="ref">04766</div>
+          <div class="role-line">Sr. BA · P&amp;C</div>
+          <div class="row"><span class="vendor">Vertex Resources</span><span class="rate">$148</span></div>
+        </div>
+        <div class="card">
+          <div class="ref">04812</div>
+          <div class="role-line">Lead BA</div>
+          <div class="row"><span class="vendor">Direct</span><span class="rate">$160</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-k">
+      <div class="col-k-head">
+        <div class="name"><span class="dot interview"></span>Interview</div>
+        <span class="count">2</span>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <div class="ref">04701</div>
+          <div class="role-line">Sr. BA · Data</div>
+          <div class="row"><span class="vendor">Apex Talent</span><span class="rate">$152</span></div>
+        </div>
+        <div class="card">
+          <div class="ref">04688</div>
+          <div class="role-line">Lead BA</div>
+          <div class="row"><span class="vendor">CastleBay Infotech</span><span class="rate">$165</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-k">
+      <div class="col-k-head">
+        <div class="name"><span class="dot placed"></span>Placed</div>
+        <span class="count">1</span>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <div class="ref">04522</div>
+          <div class="role-line">Sr. BA · Insurance</div>
+          <div class="row"><span class="vendor">Vertex Resources</span><span class="rate">$170</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-k">
+      <div class="col-k-head">
+        <div class="name"><span class="dot declined"></span>Declined</div>
+        <span class="count">2</span>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <div class="ref">04611</div>
+          <div class="role-line">BA — wrong band</div>
+          <div class="row"><span class="vendor">Apex Talent</span><span class="rate">$190</span></div>
+        </div>
+        <div class="card">
+          <div class="ref">04598</div>
+          <div class="role-line">BA · light data</div>
+          <div class="row"><span class="vendor">Vertex Resources</span><span class="rate">$120</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-k">
+      <div class="col-k-head">
+        <div class="name"><span class="dot hold"></span>On Hold</div>
+        <span class="count">1</span>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <div class="ref">04555</div>
+          <div class="role-line">Sr. BA · awaiting client</div>
+          <div class="row"><span class="vendor">Direct</span><span class="rate">$162</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+{% endblock %}

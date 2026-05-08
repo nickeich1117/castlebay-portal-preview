@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+{% block title %}CastleBay Portal — Candidate Feedback{% endblock %}
+{% set active_nav = "feedback" %}
+
+{% block extra_css %}
+.page { max-width: 760px; margin: 0 auto; padding: 40px 32px 80px; }
+
+.hero {
+  margin-bottom: 28px;
+}
+.hero .eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+.hero h1 {
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  margin-bottom: 6px;
+}
+.hero p {
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+/* Verdict banner — big, scannable */
+.verdict {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 28px 28px;
+  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: center;
+  background: var(--surface);
+}
+.verdict.advance {
+  border-color: rgba(45,138,95,.4);
+  background: linear-gradient(180deg, rgba(45,138,95,.04), var(--surface));
+}
+[data-theme="dark"] .verdict.advance {
+  background: linear-gradient(180deg, rgba(45,138,95,.08), var(--surface));
+}
+.verdict-left .label {
+  margin-bottom: 6px;
+}
+.verdict-left h2 {
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--success);
+  margin-bottom: 10px;
+}
+.verdict-left p {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+.verdict-right {
+  text-align: right;
+}
+.rating-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.rating-display small {
+  font-size: 18px;
+  color: var(--text-3);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.rating-stars {
+  display: inline-flex;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+.rating-stars .star {
+  width: 14px; height: 14px;
+}
+.rating-stars .star.on { color: var(--success); }
+.rating-stars .star.off { color: var(--border); }
+[data-theme="dark"] .rating-stars .star.off { color: var(--text-3); opacity: .3; }
+.rating-display-label {
+  font-size: 11px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Candidate context */
+.context-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px 22px;
+  margin-bottom: 20px;
+}
+.context-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 18px;
+}
+.context-row > div .label { margin-bottom: 4px; }
+.context-row > div .val {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+}
+.context-row > div .val.mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* Notes block */
+.notes-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 22px 24px;
+  margin-bottom: 20px;
+}
+.notes-card .section-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+.notes-card .author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.notes-card .author .ava {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+[data-theme="dark"] .notes-card .author .ava { background: var(--accent); color: var(--bg); }
+.notes-card .author strong { font-weight: 500; font-size: 13px; }
+.notes-card .author .when {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+  margin-left: auto;
+}
+.notes-body {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+/* Stage timeline */
+.timeline {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 18px 22px;
+  margin-bottom: 24px;
+}
+.timeline .section-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  font-weight: 500;
+  margin-bottom: 14px;
+}
+.tl-row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 13px;
+}
+.tl-row .marker {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  margin-left: 5px;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  position: relative;
+}
+.tl-row.done .marker {
+  background: var(--success);
+  border-color: var(--success);
+}
+.tl-row.now .marker {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(62,150,201,.15);
+}
+.tl-row.future .marker {
+  background: var(--bg);
+  border-color: var(--border);
+}
+[data-theme="dark"] .tl-row.future .marker { background: var(--surface); }
+.tl-row .stage-name {
+  color: var(--text);
+  font-weight: 500;
+}
+.tl-row.future .stage-name { color: var(--text-3); font-weight: 400; }
+.tl-row .when {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* CTA strip */
+.cta-strip {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.cta-strip .text {
+  font-size: 13px;
+  color: var(--text-2);
+}
+.cta-strip .text strong { color: var(--text); font-weight: 500; }
+.cta-strip .actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Privacy footnote */
+.privacy {
+  margin-top: 20px;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-2);
+  border-left: 3px solid var(--accent);
+}
+.privacy strong { color: var(--text); font-weight: 500; }
+
+/* MOBILE */
+@media (max-width: 900px) {
+  .page { padding: 24px 16px 60px; }
+  .hero h1 { font-size: 22px; }
+  .verdict { grid-template-columns: 1fr; gap: 18px; padding: 22px; text-align: left; }
+  .verdict-right { text-align: left; }
+  .context-row { grid-template-columns: 1fr 1fr; gap: 14px; }
+  .cta-strip { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .cta-strip .actions { width: 100%; }
+  .cta-strip .actions .btn { flex: 1; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="crumbs">
+  <a href="/feedback">Feedback inbox</a>
+  <span class="sep">›</span>
+  <strong>Candidate 04766</strong>
+</div>
+
+<div class="page">
+
+  <div class="hero">
+    <div class="eyebrow">Interview feedback</div>
+    <h1>Your candidate completed an interview with CastleBay.</h1>
+    <p>Here's what we learned. The submitting vendor (you) and CastleBay internal can see this; the client cannot.</p>
+  </div>
+
+  <!-- VERDICT -->
+  <div class="verdict advance">
+    <div class="verdict-left">
+      <div class="label">Outcome</div>
+      <h2>Advancing to client</h2>
+      <p>We'll submit Candidate 04766 to Texas Farm Bureau this week. Expect a status change within 3–5 business days.</p>
+    </div>
+    <div class="verdict-right">
+      <div class="rating-stars">
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star on" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+        <svg class="star off" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L10 15.4l-5.8 3.4 1.6-6.6L.6 7.8l6.8-.5z"/></svg>
+      </div>
+      <div class="rating-display">4<small>/5</small></div>
+      <div class="rating-display-label">Strong match</div>
+    </div>
+  </div>
+
+  <!-- CONTEXT -->
+  <div class="context-card">
+    <div class="context-row">
+      <div>
+        <div class="label">Candidate</div>
+        <div class="val mono">04766</div>
+      </div>
+      <div>
+        <div class="label">Submitted as</div>
+        <div class="val">Sr. BA · P&amp;C</div>
+      </div>
+      <div>
+        <div class="label">Role</div>
+        <div class="val">Lead BA — Data</div>
+      </div>
+      <div>
+        <div class="label">Client</div>
+        <div class="val">Texas Farm Bureau</div>
+      </div>
+    </div>
+    <div class="context-row" style="margin-top:14px;">
+      <div>
+        <div class="label">Submitted</div>
+        <div class="val mono">May 1, 2026</div>
+      </div>
+      <div>
+        <div class="label">Submitted rate</div>
+        <div class="val mono">$148/hr</div>
+      </div>
+      <div>
+        <div class="label">Interviewed</div>
+        <div class="val mono">May 7, 2026</div>
+      </div>
+      <div>
+        <div class="label">Current stage</div>
+        <div class="val">In Review → Interview</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="notes-card">
+    <div class="section-label">CastleBay's notes</div>
+    <div class="author">
+      <div class="ava">DL</div>
+      <div>
+        <strong>David Leduc</strong>
+        <div style="font-size:11px; color:var(--text-3);">CastleBay · Interviewer</div>
+      </div>
+      <div class="when">May 7, 4:18 PM</div>
+    </div>
+    <div class="notes-body">Strong on data modeling and stakeholder communication. Good grasp of P&amp;C domain — handled rate-table and policy-form questions cleanly. Pushed back thoughtfully on edge cases without getting defensive. Comfortable with offshore handoff and seems used to working with mixed-shore teams.
+
+Recommend advancing to client interview. Two flags worth knowing about up front:
+• Rate negotiation — they hinted at $155 floor; we'll work with you on it
+• Travel — confirmed remote-first, occasional onsite OK with notice</div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="timeline">
+    <div class="section-label">Pipeline progression</div>
+    <div class="tl-row done">
+      <div class="marker"></div>
+      <div class="stage-name">Submitted</div>
+      <div class="when">May 1</div>
+    </div>
+    <div class="tl-row done">
+      <div class="marker"></div>
+      <div class="stage-name">In Review (CastleBay)</div>
+      <div class="when">May 3</div>
+    </div>
+    <div class="tl-row now">
+      <div class="marker"></div>
+      <div class="stage-name">Interview (CastleBay)</div>
+      <div class="when">May 7</div>
+    </div>
+    <div class="tl-row future">
+      <div class="marker"></div>
+      <div class="stage-name">Submitted to Client</div>
+      <div class="when">expected May 9–14</div>
+    </div>
+    <div class="tl-row future">
+      <div class="marker"></div>
+      <div class="stage-name">Client Interview / Decision</div>
+      <div class="when">—</div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-strip">
+    <div class="text">
+      <strong>Anything else we should know about this candidate?</strong>
+      Send context now — we'll factor it into the client submission.
+    </div>
+    <div class="actions">
+      <a href="/vendor" class="btn">Back to submissions</a>
+      <button class="btn primary preview-disabled-tooltip preview-disabled">Add context</button>
+    </div>
+  </div>
+
+  <div class="privacy">
+    <strong>Why you can see this:</strong> you submitted this candidate. Other vendors see only an anonymous count — never names or feedback (Decision #104).
+  </div>
+
+</div>
+
+
+{% endblock %}
